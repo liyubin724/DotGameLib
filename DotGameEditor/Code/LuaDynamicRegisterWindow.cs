@@ -17,7 +17,7 @@ namespace Game.Core.DotLuaEditor
             public List<string> paramTypes = new List<string>();
         }
 
-        [MenuItem("MHJ/Lua/Dynamic Register")]
+        [MenuItem("DotGame/Lua/Dynamic Register")]
         private static void DisplayWin()
         {
             LuaDynamicRegisterWindow win = EditorWindow.GetWindow<LuaDynamicRegisterWindow>();

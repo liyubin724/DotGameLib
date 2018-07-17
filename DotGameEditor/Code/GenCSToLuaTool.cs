@@ -11,7 +11,7 @@ namespace CSToLua
     public class GenCSToLuaTool 
     {
 
-        [MenuItem("MHJ/Lua/Register Class")]
+        [MenuItem("DotGame/Lua/Register Class")]
         public static void GenCSToLua()
         {
             CSToLuaRegisterManager.GetInstance().Init(Application.dataPath.Replace("\\","/")+"/ClientCode/client-tools/CSRegisterToLua");
@@ -20,7 +20,7 @@ namespace CSToLua
             AssetDatabase.Refresh();
         }
 
-        [MenuItem("MHJ/Lua/Clear Register")]
+        [MenuItem("DotGame/Lua/Clear Register")]
         public static void ClearRegister()
         {
             string fileDir = Application.dataPath.Replace("\\", "/") + "/ClientCode/client-cstolua";
