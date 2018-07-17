@@ -264,9 +264,6 @@ namespace Game.Core.DotLua
                     }
                     lua.NewTable();
 
-                    lua.PushValue(-1);
-                    lua.SetField(-3, regLuaObjectArr[i].name);
-
                     RegisterToLuaObject[] luaObjs = regLuaObjectArr[i].luaObjects;
                     if(luaObjs != null && luaObjs.Length>0)
                     {
@@ -280,11 +277,10 @@ namespace Game.Core.DotLua
                             Type regType = luaObjs[j].regObj.GetType();
                             LuaRegister.RegisterType(regType);
                             lua.NewClassUserData(luaObjs[j].regObj);
-                            lua.RawSetI(-1, j + 1);
+                            lua.RawSetI(-2, j + 1);
                         }
                     }
-                    lua.Pop(1);
-
+                    lua.SetField(-2, regLuaObjectArr[i].name);
                 }
             }
         }

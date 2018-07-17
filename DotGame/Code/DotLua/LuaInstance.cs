@@ -304,17 +304,6 @@ namespace Game.Core.DotLua
             return errorString;
         }
 
-        public void RegisterGameObject(object o, int Object_ref)
-        {
-            lua_.RawGetI(LuaAPI.LUA_REGISTRYINDEX, LuaInstance.instance.table_table_ref);
-            lua_.GetField(-1, "insert");
-            lua_.RawGetI(LuaAPI.LUA_REGISTRYINDEX, Object_ref);
-            lua_.NewClassUserData(o);
-            lua_.PCall(2, 0, 0);
-
-            lua_.Pop(1);
-        }
-
         public void Dispose()
         {
             if (lua_ != null)
