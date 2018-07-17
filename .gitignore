@@ -1,0 +1,12 @@
+.vs/
+bin/
+obj/
+DotGame/bin/
+DotGame/obj/
+DotGameEditor/bin/
+DotGameEditor/obj/
+DotGameExample/
+DotGameUnityProj/
+
+*.bak
+*.temp
