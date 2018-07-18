@@ -200,9 +200,6 @@ namespace Game.Core.DotLua
 
                     lua.NewTable();
 
-                    lua.PushValue(-1);
-                    lua.SetField(-3, regLuaBehaviourArr[i].name);
-
                     RegisterToLuaBehaviour[] behs = regLuaBehaviourArr[i].luaBehaviours;
                     if(behs!=null && behs.Length>0)
                     {
@@ -215,11 +212,11 @@ namespace Game.Core.DotLua
                             }
                             behs[j].behaviour.InitLua();
 
-                            lua.RawGetI(LuaAPI.LUA_REGISTRYINDEX, behs[j].behaviour.ObjectRef);
+                            lua.RawGetI(LuaAPI.LUA_REGISTRYINDEX, behs[j].behaviour.objRef);
                             lua.RawSetI(-2, j + 1);
                         }
                     }
-                    lua.Pop(1);
+                    lua.SetField(-2, regLuaBehaviourArr[i].name);
                 }
             }
         }
