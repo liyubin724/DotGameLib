@@ -53,6 +53,8 @@ namespace Game.Core.DotLua
 
         public bool IsOnClickPassGameObject = false;
 
+        private LuaState lua;
+
         protected int awakeFunRef = LuaAPI.LUA_REFNIL;
         protected int startFunRef = LuaAPI.LUA_REFNIL;
         protected int destoryFunRef = LuaAPI.LUA_REFNIL;
@@ -75,11 +77,11 @@ namespace Game.Core.DotLua
             if (isInited)
                 return;
 
-            LuaState lua_ = LuaInstance.instance.Get();
-            if (lua_ != null)
+            lua = LuaInstance.instance.Get();
+            if (lua != null)
             {
-                lua_.NewTable();
-                objRef = lua_.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
+                lua.NewTable();
+                objRef = lua.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
             }
             isInited = true;
         }
@@ -93,7 +95,6 @@ namespace Game.Core.DotLua
                 return;
             }
 
-            LuaState lua = LuaInstance.instance.Get();
             lua.RawGetI(LuaAPI.LUA_REGISTRYINDEX, objRef);
             lua.GetGlobal(scriptName);
             if(!lua.IsTable(-1))
@@ -103,11 +104,7 @@ namespace Game.Core.DotLua
                 {
                     LuaInstance.instance.DoFile(scriptShortPath);
                     lua.GetGlobal(scriptName);
-                    if(lua.IsTable(-1))
-                    {
-                        lua.PushValue(-1);
-                        classRef = lua.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
-                    }else
+                    if(!lua.IsTable(-1))
                     {
                         lua.Pop(2);
                         DebugLogger.LogError(string.Format("LuaBehaviour::Awake->Top is not a table!"));
@@ -122,21 +119,26 @@ namespace Game.Core.DotLua
                 }
             }
 
-            if(lua.GetMetaTable(-1))
+            lua.PushValue(-1);
+            classRef = lua.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
+
+            if (lua.GetMetaTable(-1))
             {
                 lua.Pop(1);
             }else
             {
                 lua.PushValue(-1);
                 lua.SetField(-2, "__index");
-                lua.SetMetaTable(-2);
             }
+            lua.SetMetaTable(-2);
 
             RefBehaviourFuncs();
             RegisterLuaBehaviour();
             RegisterLuaObject();
             RegisterLuaBehaviourArr();
             RegisterLuaObjectArr();
+
+            //RegisterTimerAction();
 
             lua.NewClassUserData(gameObject);
             lua.SetField(-2, "gameObject");
@@ -154,22 +156,20 @@ namespace Game.Core.DotLua
             if (classRef == LuaAPI.LUA_REFNIL)
                 return;
 
-            LuaState lua_ = LuaInstance.instance.Get();
-            lua_.RawGetI(LuaAPI.LUA_REGISTRYINDEX, classRef);
-            lua_.GetField(-1, "Awake");
-            awakeFunRef = lua_.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
-            lua_.GetField(-1, "Start");
-            startFunRef = lua_.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
-            lua_.GetField(-1, "OnDestroy");
-            destoryFunRef = lua_.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
-            lua_.Pop(1);
+            lua.RawGetI(LuaAPI.LUA_REGISTRYINDEX, classRef);
+            lua.GetField(-1, "Awake");
+            awakeFunRef = lua.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
+            lua.GetField(-1, "Start");
+            startFunRef = lua.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
+            lua.GetField(-1, "OnDestroy");
+            destoryFunRef = lua.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
+            lua.Pop(1);
         }
 
         void RegisterLuaBehaviour()
         {
             if (regLuaBehaviour != null && regLuaBehaviour.Length > 0)
             {
-                LuaState lua = LuaInstance.instance.Get();
                 for (int i = 0; i < regLuaBehaviour.Length; i++)
                 {
                     if (regLuaBehaviour[i].behaviour == null)
@@ -189,7 +189,6 @@ namespace Game.Core.DotLua
         {
             if (regLuaBehaviourArr != null && regLuaBehaviourArr.Length > 0)
             {
-                LuaState lua = LuaInstance.instance.Get();
                 for(int i =0;i<regLuaBehaviourArr.Length;i++)
                 {
                     if(string.IsNullOrEmpty(regLuaBehaviourArr[i].name))
@@ -223,7 +222,6 @@ namespace Game.Core.DotLua
 
         void RegisterLuaObject()
         {
-            LuaState lua_ = LuaInstance.instance.Get();
             for (int i = 0; i < regLuaObject.Length; i++)
             {
                 if (regLuaObject[i].obj == null || regLuaObject[i].regObj == null)
@@ -240,10 +238,10 @@ namespace Game.Core.DotLua
                 Type regType = regLuaObject[i].regObj.GetType();
                 LuaRegister.RegisterType(regType);
 
-                lua_.RawGetI(LuaAPI.LUA_REGISTRYINDEX, objRef);
-                lua_.NewClassUserData(regLuaObject[i].regObj);
-                lua_.SetField(-2, regName);
-                lua_.Pop(1);
+                lua.RawGetI(LuaAPI.LUA_REGISTRYINDEX, objRef);
+                lua.NewClassUserData(regLuaObject[i].regObj);
+                lua.SetField(-2, regName);
+                lua.Pop(1);
             }
         }
 
@@ -251,7 +249,6 @@ namespace Game.Core.DotLua
         {
             if(regLuaObjectArr!=null && regLuaObjectArr.Length>0)
             {
-                LuaState lua = LuaInstance.instance.Get();
                 for(int i =0;i<regLuaObjectArr.Length;i++)
                 {
                     if (string.IsNullOrEmpty(regLuaObjectArr[i].name))
@@ -290,7 +287,6 @@ namespace Game.Core.DotLua
 
         void OnDestroy()
         {
-            LuaState lua = LuaInstance.instance.Get();
             if (lua == null)
                 return;
 
