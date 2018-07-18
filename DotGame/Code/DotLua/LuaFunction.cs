@@ -29,6 +29,11 @@ namespace Game.Core.DotLua
             get { return selfRef; }
         }
 
+        public bool IsValid()
+        {
+            return funRef != LuaAPI.LUA_REFNIL;
+        }
+
         private bool isDisposed = false;
 
         ~LuaFunction()
@@ -77,6 +82,12 @@ namespace Game.Core.DotLua
             {
                 lua.PCall(0, 0, 0);
             }
+        }
+
+        public void Invoke(object obj)
+        {
+            if (obj == null)
+                Invoke();
         }
     }
 }

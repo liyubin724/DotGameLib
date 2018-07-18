@@ -4,7 +4,7 @@ using System;
 
 namespace Game.Core.DotLuaWrapper
 {
-    public class DebugLoggerWrapper
+    public static class DebugLoggerWrapper
     {
         static LuaState lua;
         public static void RegisterToLua(LuaState l)
@@ -50,7 +50,7 @@ namespace Game.Core.DotLuaWrapper
             return 0;
         }
         
-        public static string GetLogInfo(int stackNum = 2)
+        public static string GetLogInfo(int stackNum = 4)
         {
             int idx = -1;
             LuaType paraType = lua.Type(idx);

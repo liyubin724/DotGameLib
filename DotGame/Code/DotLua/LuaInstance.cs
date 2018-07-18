@@ -62,8 +62,7 @@ namespace Game.Core.DotLua
             lua_.GetGlobal("table");
             table_table_ref = lua_.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
 
-            LuaRegisterWrapper.RegisterToLua(lua_);
-            DebugLoggerWrapper.RegisterToLua(lua_);
+            LuaWrapper.PreWrapper(lua_);
         }
 
         public LuaState Get()

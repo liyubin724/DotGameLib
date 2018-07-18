@@ -117,12 +117,15 @@
   <ItemGroup>
     <Compile Include="Code\DotLuaWrapper\DebugLoggerWrapper.cs" />
     <Compile Include="Code\DotLuaWrapper\LuaRegisterWrapper.cs" />
+    <Compile Include="Code\DotLuaWrapper\LuaTimerWrapper.cs" />
+    <Compile Include="Code\DotLuaWrapper\LuaWrapper.cs" />
     <Compile Include="Code\DotLua\LuaBehaviour_Call.cs" />
     <Compile Include="Code\DotLua\LuaBehaviour_Event.cs" />
     <Compile Include="Code\DotLua\LuaBehaviour_Timer.cs" />
     <Compile Include="Code\DotLua\LuaTable.cs" />
     <Compile Include="Code\DotLua\LuaFunction.cs" />
     <Compile Include="Code\Timer\HierarchicalTimerWheel.cs" />
+    <Compile Include="Code\Timer\LuaTimerManager.cs" />
     <Compile Include="Code\Timer\TimerManager.cs" />
     <Compile Include="Code\Timer\TimerTask.cs" />
     <Compile Include="Code\Timer\TimerWheel.cs" />

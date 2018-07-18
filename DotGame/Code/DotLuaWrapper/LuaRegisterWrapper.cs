@@ -5,10 +5,10 @@ namespace Game.Core.DotLuaWrapper
 {
     public class LuaRegisterWrapper
     {
-        static LuaState lua_;
+        static LuaState lua;
         public static void RegisterToLua(LuaState lua)
         {
-            lua_ = lua;
+            LuaRegisterWrapper.lua = lua;
             string[] funcList = new string[]
             {
              "RegisterClass",
@@ -26,7 +26,7 @@ namespace Game.Core.DotLuaWrapper
         [MonoPInvokeCallback(typeof(LuaAPI.lua_CFunction))]
         private static int RegisterClass(IntPtr l)
         {
-            string className = lua_.ToString(-1);
+            string className = lua.ToString(-1);
             LuaRegister.RegisterClass(className);
 
             return 0;
@@ -35,7 +35,7 @@ namespace Game.Core.DotLuaWrapper
         [MonoPInvokeCallback(typeof(LuaAPI.lua_CFunction))]
         private static int RegisterIngoreStatic(IntPtr l)
         {
-            string className = lua_.ToString(-1);
+            string className = lua.ToString(-1);
             LuaRegister.RegisterIngoreStatic(className);
 
             return 0;

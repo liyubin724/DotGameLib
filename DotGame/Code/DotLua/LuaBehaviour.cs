@@ -138,7 +138,7 @@ namespace Game.Core.DotLua
             RegisterLuaBehaviourArr();
             RegisterLuaObjectArr();
 
-            //RegisterTimerAction();
+            RegisterTimerAction();
 
             lua.NewClassUserData(gameObject);
             lua.SetField(-2, "gameObject");
@@ -289,6 +289,8 @@ namespace Game.Core.DotLua
         {
             if (lua == null)
                 return;
+
+            DisposeTimer();
 
             if (destoryFunRef != LuaAPI.LUA_REFNIL)
                 CallFunction(destoryFunRef);
