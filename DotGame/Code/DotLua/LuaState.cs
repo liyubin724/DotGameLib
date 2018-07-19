@@ -14,34 +14,34 @@ namespace Game.Core.DotLua
 
     public class LuaState
     {
-        private IntPtr m_lua = IntPtr.Zero;
-        private LuaAPI.lua_CFunction m_pfnDispatch;
-        private LuaAPI.lua_CFunction m_pfnPanic;
-		private static LuaState m_GlobalState;
+        private IntPtr luaPtr = IntPtr.Zero;
+        private LuaAPI.lua_CFunction pfnDispatch;
+        private LuaAPI.lua_CFunction pfnPanic;
+		private static LuaState globalLuaState;
 
         public LuaState(IntPtr lua)
         {
-            this.m_lua = lua;
-			m_GlobalState = this;
-            this.m_pfnPanic = LuaState.Lua_Panic;
-            this.m_pfnDispatch = LuaState.Lua_DispatchFun;
-            LuaAPI.lua_atpanic(this.m_lua, this.m_pfnPanic);
+            this.luaPtr = lua;
+			globalLuaState = this;
+            this.pfnPanic = LuaState.Lua_Panic;
+            this.pfnDispatch = LuaState.Lua_DispatchFun;
+            LuaAPI.lua_atpanic(this.luaPtr, this.pfnPanic);
         }
 
         public void Close()
         {
-            LuaAPI.lua_close(m_lua);
-            m_lua = IntPtr.Zero;
+            LuaAPI.lua_close(luaPtr);
+            luaPtr = IntPtr.Zero;
         }
 
         public bool CheckStack(int size)
         {
-            return (LuaAPI.lua_checkstack(this.m_lua, size) != 0);
+            return (LuaAPI.lua_checkstack(this.luaPtr, size) != 0);
         }
 
         public void Concat(int n)
         {
-            LuaAPI.lua_concat(this.m_lua, n);
+            LuaAPI.lua_concat(this.luaPtr, n);
         }
 
         public static IntPtr Create()
@@ -51,47 +51,47 @@ namespace Game.Core.DotLua
 
         public void CreateTable(int narray, int nrec)
         {
-            LuaAPI.lua_createtable(this.m_lua, narray, nrec);
+            LuaAPI.lua_createtable(this.luaPtr, narray, nrec);
         }
 
         public int Error()
         {
-            return LuaAPI.lua_error(this.m_lua);
+            return LuaAPI.lua_error(this.luaPtr);
         }
 
         public void GetField(int index, string key)
         {
-            LuaAPI.lua_getfield(this.m_lua, index, key);
+            LuaAPI.lua_getfield(this.luaPtr, index, key);
         }
 
         public void GetGlobal(string name)
         {
-            LuaAPI.lua_getfield(this.m_lua, LuaAPI.LUA_GLOBALSINDEX, name);
+            LuaAPI.lua_getfield(this.luaPtr, LuaAPI.LUA_GLOBALSINDEX, name);
         }
 
         public IntPtr GetLuaPtr()
         {
-            return this.m_lua;
+            return this.luaPtr;
         }
 
         public bool GetMetaTable(int index)
         {
-            return (LuaAPI.lua_getmetatable(this.m_lua, index) != 0);
+            return (LuaAPI.lua_getmetatable(this.luaPtr, index) != 0);
         }
 
         public void GetTable(int index)
         {
-            LuaAPI.lua_gettable(this.m_lua, index);
+            LuaAPI.lua_gettable(this.luaPtr, index);
         }
 
         public int GetTop()
         {
-            return LuaAPI.lua_gettop(this.m_lua);
+            return LuaAPI.lua_gettop(this.luaPtr);
         }
 
         public void Insert(int index)
         {
-            LuaAPI.lua_insert(this.m_lua, index);
+            LuaAPI.lua_insert(this.luaPtr, index);
         }
 
         public bool IsFunction(int index)
@@ -127,18 +127,18 @@ namespace Game.Core.DotLua
 
         public int L_CheckInteger(int narg)
         {
-            return (int)LuaAPI.luaL_checkinteger(this.m_lua, narg);
+            return (int)LuaAPI.luaL_checkinteger(this.luaPtr, narg);
         }
 
         public double L_CheckNumber(int narg)
         {
-            return LuaAPI.luaL_checknumber(this.m_lua, narg);
+            return LuaAPI.luaL_checknumber(this.luaPtr, narg);
         }
 
         public string L_CheckString(int narg)
         {
             int l = 0;
-            IntPtr ptr = LuaAPI.luaL_checklstring(this.m_lua, narg, ref l);
+            IntPtr ptr = LuaAPI.luaL_checklstring(this.luaPtr, narg, ref l);
             if (ptr == IntPtr.Zero)
             {
                 return string.Empty;
@@ -148,7 +148,7 @@ namespace Game.Core.DotLua
 
         public void L_CheckType(int index, LuaType t)
         {
-            LuaAPI.luaL_checktype(this.m_lua, index, (int)t);
+            LuaAPI.luaL_checktype(this.luaPtr, index, (int)t);
         }
 
 
@@ -160,24 +160,24 @@ namespace Game.Core.DotLua
                 return ThreadStatus.LUA_OK;
             }
 #else
-            if ((LuaAPI.luaL_loadfile(this.m_lua, filename) == 0) && (LuaAPI.lua_pcall(this.m_lua, 0, -1, 0) == 0))
+            if ((LuaAPI.luaL_loadfile(this.luaPtr, filename) == 0) && (LuaAPI.lua_pcall(this.luaPtr, 0, -1, 0) == 0))
             {
                 return ThreadStatus.LUA_OK;
             }
 #endif
-            DebugLogger.LogError("DoFile Error: " + filename + "\nlua stack: " + LuaInstance.ConstructString(LuaInstance.instance.Get()));
+            DebugLogger.LogError("DoFile Error: " + filename + "\nlua stack: " + LuaInstance.ConstructString(LuaInstance.Instance.Get()));
             return ThreadStatus.LUA_ERRRUN;
         }
 
         public ThreadStatus L_DoString(string s)
         {
-            ThreadStatus status = (ThreadStatus)LuaAPI.luaL_loadstring(this.m_lua, s);
+            ThreadStatus status = (ThreadStatus)LuaAPI.luaL_loadstring(this.luaPtr, s);
             if (status != ThreadStatus.LUA_OK)
             {
                 DebugLogger.LogError(ToString(-1));
                 return status;
             }
-            status = (ThreadStatus)LuaAPI.lua_pcall(this.m_lua, 0, -1, 0);
+            status = (ThreadStatus)LuaAPI.lua_pcall(this.luaPtr, 0, -1, 0);
             if (status != ThreadStatus.LUA_OK)
             {
                 DebugLogger.LogError(ToString(-1));
@@ -187,24 +187,24 @@ namespace Game.Core.DotLua
 
         public void L_Require(string fileName) {
             PushString(fileName);
-            LuaAPI.ll_require(m_lua);
+            LuaAPI.ll_require(luaPtr);
         }
 
         public void L_OpenLibs()
         {
-            LuaAPI.luaL_openlibs(this.m_lua);
+            LuaAPI.luaL_openlibs(this.luaPtr);
         }
 
         public int L_Ref(int t)
         {
-            return LuaAPI.luaL_ref(this.m_lua, t);
+            return LuaAPI.luaL_ref(this.luaPtr, t);
         }
 
         public void L_Unref(int t, ref int reference)
         {
             if (reference != LuaAPI.LUA_REFNIL)
             {
-                LuaAPI.luaL_unref(this.m_lua, t, reference);
+                LuaAPI.luaL_unref(this.luaPtr, t, reference);
                 reference = LuaAPI.LUA_REFNIL;
             }
         }
@@ -213,7 +213,7 @@ namespace Game.Core.DotLua
         private static int Lua_DispatchFun(IntPtr L)
         {
             CSharpFunctionDelegate target = (CSharpFunctionDelegate)GCHandle.FromIntPtr(LuaAPI.lua_touserdata(L, -1001001)).Target;
-			return target(LuaState.m_GlobalState);
+			return target(LuaState.globalLuaState);
         }
 
 		[MonoPInvokeCallback(typeof(LuaAPI.lua_CFunction))]
@@ -240,17 +240,17 @@ namespace Game.Core.DotLua
 
         public void NewTable(int narr, int nrec = 0)
         {
-            LuaAPI.lua_createtable(this.m_lua, narr, nrec);
+            LuaAPI.lua_createtable(this.luaPtr, narr, nrec);
         }
 
         public bool Next(int index)
         {
-            return (LuaAPI.lua_next(this.m_lua, index) != 0);
+            return (LuaAPI.lua_next(this.luaPtr, index) != 0);
         }
 
         public ThreadStatus PCall(int numArgs, int numResults, int errFunc)
         {
-            LuaState lua = LuaInstance.instance.Get();
+            LuaState lua = LuaInstance.Instance.Get();
             int errorHandlerIndex = 0;
 #if UNITY_EDITOR||UNITY_STANDALONE
             lua.GetGlobal("lua_get_debug_info");
@@ -261,7 +261,7 @@ namespace Game.Core.DotLua
             }
             errorHandlerIndex = -2 - numArgs;
 #endif
-            if (LuaAPI.lua_pcall(this.m_lua, numArgs, numResults, errorHandlerIndex) != 0)
+            if (LuaAPI.lua_pcall(this.luaPtr, numArgs, numResults, errorHandlerIndex) != 0)
             {
                 DebugLogger.LogError("lua Error stack: " + LuaInstance.ConstructString(lua));
 #if UNITY_EDITOR||UNITY_STANDALONE 
@@ -284,7 +284,7 @@ namespace Game.Core.DotLua
         }
 
         public void CallMeta(int index,string metaFuncName) {
-            int haveMetaFunc = LuaAPI.luaL_callmeta(m_lua, index, metaFuncName);
+            int haveMetaFunc = LuaAPI.luaL_callmeta(luaPtr, index, metaFuncName);
             if (haveMetaFunc == 0)
             {
                 DebugLogger.LogError("this table DO NOT have metafunction:" + metaFuncName);
@@ -367,21 +367,21 @@ namespace Game.Core.DotLua
 
         public void Pop(int n)
         {
-            LuaAPI.lua_settop(this.m_lua, -n - 1);
+            LuaAPI.lua_settop(this.luaPtr, -n - 1);
         }
 
         public void PushBoolean(bool b)
         {
-            LuaAPI.lua_pushboolean(this.m_lua, !b ? 0 : 1);
+            LuaAPI.lua_pushboolean(this.luaPtr, !b ? 0 : 1);
         }
 
         public GCHandle PushCSharpClosure(CSharpFunctionDelegate f, int n)
         {
             GCHandle handle = GCHandle.Alloc(f);
             IntPtr p = GCHandle.ToIntPtr(handle);
-            LuaAPI.lua_pushlightuserdata(this.m_lua, p);
-            LuaAPI.lua_insert(this.m_lua, -(n + 1));
-            LuaAPI.lua_pushcclosure(this.m_lua, this.m_pfnDispatch, n + 1);
+            LuaAPI.lua_pushlightuserdata(this.luaPtr, p);
+            LuaAPI.lua_insert(this.luaPtr, -(n + 1));
+            LuaAPI.lua_pushcclosure(this.luaPtr, this.pfnDispatch, n + 1);
             return handle;
         }
 
@@ -389,13 +389,13 @@ namespace Game.Core.DotLua
         {
             GCHandle handle = GCHandle.Alloc(f);
             IntPtr p = GCHandle.ToIntPtr(handle);
-            LuaAPI.lua_pushlightuserdata(this.m_lua, p);
-            LuaAPI.lua_pushcclosure(this.m_lua, this.m_pfnDispatch, 1);
+            LuaAPI.lua_pushlightuserdata(this.luaPtr, p);
+            LuaAPI.lua_pushcclosure(this.luaPtr, this.pfnDispatch, 1);
             return handle;
         }
 
         public void PushLuaClosure(LuaAPI.lua_CFunction func, int n) {
-            LuaAPI.lua_pushcclosure(this.m_lua, func, n);
+            LuaAPI.lua_pushcclosure(this.luaPtr, func, n);
         
         }
 
@@ -406,42 +406,42 @@ namespace Game.Core.DotLua
              LuaAPI.lua_pushinteger(this.m_lua, n);
 #else
             long longN = n;
-            LuaAPI.lua_pushinteger(this.m_lua, longN);
+            LuaAPI.lua_pushinteger(this.luaPtr, longN);
 #endif
         }
 
         public GCHandle PushLightUserData(object o)
         {
             GCHandle handle = GCHandle.Alloc(o);
-            LuaAPI.lua_pushlightuserdata(this.m_lua, GCHandle.ToIntPtr(handle));
+            LuaAPI.lua_pushlightuserdata(this.luaPtr, GCHandle.ToIntPtr(handle));
             return handle;
         }
 
         public void PushNil()
         {
-            LuaAPI.lua_pushnil(this.m_lua);
+            LuaAPI.lua_pushnil(this.luaPtr);
         }
 
         public void PushNumber(double n)
         {
-            LuaAPI.lua_pushnumber(this.m_lua, n);
+            LuaAPI.lua_pushnumber(this.luaPtr, n);
         }
 
         public void PushString(string s)
         {
            // int len = 0;
           //  IntPtr ptr = LuaAPI.NativeUtf8FromString(s, ref len);
-            LuaAPI.lua_pushstring(this.m_lua, s);
+            LuaAPI.lua_pushstring(this.luaPtr, s);
         }
 
         public void Pushlstring(IntPtr s, int len)
         {
-            LuaAPI.lua_pushlstring(this.m_lua, s, len);
+            LuaAPI.lua_pushlstring(this.luaPtr, s, len);
         }
 
         public void PushValue(int index)
         {
-            LuaAPI.lua_pushvalue(this.m_lua, index);
+            LuaAPI.lua_pushvalue(this.luaPtr, index);
         }
 
         public void PushIntList(List<int> list)
@@ -518,81 +518,81 @@ namespace Game.Core.DotLua
 
         public bool RawEqual(int index1, int index2)
         {
-            return (LuaAPI.lua_rawequal(this.m_lua, index1, index2) != 0);
+            return (LuaAPI.lua_rawequal(this.luaPtr, index1, index2) != 0);
         }
 
         public void RawGet(int index)
         {
-            LuaAPI.lua_rawget(this.m_lua, index);
+            LuaAPI.lua_rawget(this.luaPtr, index);
         }
 
         public void RawGetI(int index, int n)
         {
-            LuaAPI.lua_rawgeti(this.m_lua, index, n);
+            LuaAPI.lua_rawgeti(this.luaPtr, index, n);
         }
 
         public int RawLen(int index)
         {
-            return LuaAPI.lua_objlen(this.m_lua, index);
+            return LuaAPI.lua_objlen(this.luaPtr, index);
         }
 
         public void RawSet(int index)
         {
-            LuaAPI.lua_rawset(this.m_lua, index);
+            LuaAPI.lua_rawset(this.luaPtr, index);
         }
 
         public void RawSetI(int index, int n)
         {
-            LuaAPI.lua_rawseti(this.m_lua, index, n);
+            LuaAPI.lua_rawseti(this.luaPtr, index, n);
         }
 
         public void Remove(int index)
         {
-            LuaAPI.lua_remove(this.m_lua, index);
+            LuaAPI.lua_remove(this.luaPtr, index);
         }
 
         public void Replace(int index)
         {
-            LuaAPI.lua_replace(this.m_lua, index);
+            LuaAPI.lua_replace(this.luaPtr, index);
         }
 
         public void SetField(int index, string key)
         {
-            LuaAPI.lua_setfield(this.m_lua, index, key);
+            LuaAPI.lua_setfield(this.luaPtr, index, key);
         }
 
         public void SetGlobal(string name)
         {
-            LuaAPI.lua_setfield(this.m_lua, LuaAPI.LUA_GLOBALSINDEX, name);
+            LuaAPI.lua_setfield(this.luaPtr, LuaAPI.LUA_GLOBALSINDEX, name);
         }
 
         public bool SetMetaTable(int index)
         {
-            return (LuaAPI.lua_setmetatable(this.m_lua, index) != 0);
+            return (LuaAPI.lua_setmetatable(this.luaPtr, index) != 0);
         }
         public int NewMetaTable(string name)
         {
-            return LuaAPI.luaL_newmetatable(this.m_lua, name);
+            return LuaAPI.luaL_newmetatable(this.luaPtr, name);
         }
 
         public void SetTable(int index)
         {
-            LuaAPI.lua_settable(this.m_lua, index);
+            LuaAPI.lua_settable(this.luaPtr, index);
         }
 
         public void SetTop(int top)
         {
-            LuaAPI.lua_settop(this.m_lua, top);
+            LuaAPI.lua_settop(this.luaPtr, top);
         }
 
         public bool ToBoolean(int index)
         {
-            return (LuaAPI.lua_toboolean(this.m_lua, index) != 0);
+            return (LuaAPI.lua_toboolean(this.luaPtr, index) != 0);
         }
 
         public int ToInteger(int index)
         {
-            return (int)LuaAPI.lua_tonumber(this.m_lua, index);
+            return (int)LuaAPI.lua_tonumber(this.luaPtr, index);
         }
 
         public char ToChar(int index)
@@ -603,14 +603,14 @@ namespace Game.Core.DotLua
         public int ToIntegerX(int index, out bool isnum)
         {
             int num = 0;
-            long num2 = LuaAPI.lua_tointeger(this.m_lua, index);
+            long num2 = LuaAPI.lua_tointeger(this.luaPtr, index);
             isnum = num != 0;
             return (int)num2;
         }
 
         public double ToNumber(int index)
         {
-            return LuaAPI.lua_tonumber(this.m_lua, index);
+            return LuaAPI.lua_tonumber(this.luaPtr, index);
         }
 
         public object ToSystemObject(int index,Type type)
@@ -687,7 +687,7 @@ namespace Game.Core.DotLua
 
         public object ToUserDataObject(int index)
         {
-            IntPtr ptr = LuaAPI.lua_topointer(this.m_lua, index);
+            IntPtr ptr = LuaAPI.lua_topointer(this.luaPtr, index);
             if (ptr == IntPtr.Zero)
             {
                 return null;
@@ -703,7 +703,7 @@ namespace Game.Core.DotLua
 
         public byte[] CopyBytesFromUnManaged(int index,int length)
         {
-            IntPtr ptr = LuaAPI.lua_topointer(this.m_lua, index);
+            IntPtr ptr = LuaAPI.lua_topointer(this.luaPtr, index);
             if (ptr == IntPtr.Zero)
             {
                 return null;
@@ -725,31 +725,31 @@ namespace Game.Core.DotLua
 
         public void PushLongInterger(long n)
         {
-            LuaAPI.lua_pushlong(this.m_lua, n);
+            LuaAPI.lua_pushlong(this.luaPtr, n);
         }
 
         public long ReadLongId(int index) {
-            long longValue = LuaAPI.lua_toID(this.m_lua, index);
+            long longValue = LuaAPI.lua_toID(this.luaPtr, index);
             return longValue;
         }
 
         public void PushLongId(long v) {
-            LuaAPI.lua_pushID(this.m_lua, v);
+            LuaAPI.lua_pushID(this.luaPtr, v);
         }
 
         public void PushULong(ulong v)
         {
-            LuaAPI.lua_pushulong(this.m_lua, v);
+            LuaAPI.lua_pushulong(this.luaPtr, v);
         }
 
         public ulong ReadULong(int index)
         {
-            return LuaAPI.lua_toulong(this.m_lua, index);
+            return LuaAPI.lua_toulong(this.luaPtr, index);
         }
 
         public GCHandle ToUserDataHandler(int index)
         {
-            IntPtr ptr = LuaAPI.lua_topointer(this.m_lua, index);
+            IntPtr ptr = LuaAPI.lua_topointer(this.luaPtr, index);
             if (ptr == IntPtr.Zero)
             {
                 return new GCHandle();
@@ -770,7 +770,7 @@ namespace Game.Core.DotLua
 #else
             int len = 0;
 #endif
-            IntPtr ptr = LuaAPI.lua_tolstring(this.m_lua, index, ref len);
+            IntPtr ptr = LuaAPI.lua_tolstring(this.luaPtr, index, ref len);
             if (ptr == IntPtr.Zero)
             {
                 return string.Empty;
@@ -781,7 +781,7 @@ namespace Game.Core.DotLua
 
         public int[] ToIntArray(int index)
         {
-            int length = LuaAPI.lua_objlen(this.m_lua, index);
+            int length = LuaAPI.lua_objlen(this.luaPtr, index);
             int[] array = new int[length];
 
             for (int i = 0; i < length; i++)
@@ -796,7 +796,7 @@ namespace Game.Core.DotLua
 
         public float[] ToFloatArray(int index)
         {
-            int length = LuaAPI.lua_objlen(this.m_lua, index);
+            int length = LuaAPI.lua_objlen(this.luaPtr, index);
             float[] array = new float[length];
 
             for (int i = 0; i < length; i++)
@@ -811,7 +811,7 @@ namespace Game.Core.DotLua
 
         public bool[] ToBoolArray(int index)
         {
-            int length = LuaAPI.lua_objlen(this.m_lua, index);
+            int length = LuaAPI.lua_objlen(this.luaPtr, index);
             bool[] array = new bool[length];
 
             for (int i = 0; i < length; i++)
@@ -826,7 +826,7 @@ namespace Game.Core.DotLua
 
         public string[] ToStringArray(int index)
         {
-            int length = LuaAPI.lua_objlen(this.m_lua, index);
+            int length = LuaAPI.lua_objlen(this.luaPtr, index);
             string[] array = new string[length];
 
             for (int i = 0; i < length; i++)
@@ -844,7 +844,7 @@ namespace Game.Core.DotLua
 
         public GCHandle ToUserData(int index)
         {
-            return GCHandle.FromIntPtr(LuaAPI.lua_topointer(this.m_lua, index));
+            return GCHandle.FromIntPtr(LuaAPI.lua_topointer(this.luaPtr, index));
         }
 
         private GCHandle NewUserData(object o)
@@ -852,7 +852,7 @@ namespace Game.Core.DotLua
             GCHandle handle = GCHandle.Alloc(o);
             IntPtr obj_ptr = GCHandle.ToIntPtr(handle);
            
-            IntPtr ptr = LuaAPI.lua_newuserdata(this.m_lua, IntPtr.Size);
+            IntPtr ptr = LuaAPI.lua_newuserdata(this.luaPtr, IntPtr.Size);
 
             Marshal.WriteIntPtr(ptr, obj_ptr);
       
@@ -866,7 +866,7 @@ namespace Game.Core.DotLua
                 PushNil();
                 return true;
             }
-            int luaRef = LuaInstance.instance.RegisterData.GetRegisterRef(obj.GetType()) ;
+            int luaRef = LuaInstance.Instance.RegisterData.GetRegisterRef(obj.GetType()) ;
             if (luaRef != LuaAPI.LUA_REFNIL)
             {
                 NewUserData(obj);
@@ -889,7 +889,7 @@ namespace Game.Core.DotLua
             else if ((obj.GetType().IsGenericType && obj.GetType().GetGenericTypeDefinition() == typeof(List<>)) || obj.GetType().IsArray)
             {
                 LuaRegister.RegisterType(obj.GetType());
-                luaRef = LuaInstance.instance.RegisterData.GetRegisterRef(obj.GetType());
+                luaRef = LuaInstance.Instance.RegisterData.GetRegisterRef(obj.GetType());
                 if (luaRef != LuaAPI.LUA_REFNIL)
                 {
                     NewUserData(obj);
@@ -914,7 +914,7 @@ namespace Game.Core.DotLua
 
         public bool NewTypeClassUserData(object obj,Type type)
         {
-            int luaRef = LuaInstance.instance.RegisterData.GetRegisterRef(obj.GetType());
+            int luaRef = LuaInstance.Instance.RegisterData.GetRegisterRef(obj.GetType());
             if (luaRef != LuaAPI.LUA_REFNIL)
             {
                 NewUserData(obj);
@@ -936,14 +936,14 @@ namespace Game.Core.DotLua
         {
             GCHandle handle = GCHandle.Alloc(o);
             IntPtr obj_ptr = GCHandle.ToIntPtr(handle);
-            IntPtr ptr = LuaAPI.lua_newuserdata(this.m_lua, IntPtr.Size);
+            IntPtr ptr = LuaAPI.lua_newuserdata(this.luaPtr, IntPtr.Size);
             Marshal.WriteIntPtr(ptr, obj_ptr);
             SetGCFunc();
         }
 
         public void SetGCFunc()
         {
-            LuaState lua = LuaInstance.instance.Get();
+            LuaState lua = LuaInstance.Instance.Get();
             lua.NewTable();
             lua.PushLuaClosure(GC, 0);
             lua.SetField(-2, "__gc");
@@ -953,7 +953,7 @@ namespace Game.Core.DotLua
         public GCHandle NewUnManageMem(object o) {
             GCHandle handle = GCHandle.Alloc(o, GCHandleType.Pinned);
             IntPtr obj_ptr = handle.AddrOfPinnedObject();
-            LuaInstance.instance.Get().PushNumber((double)obj_ptr.ToInt64());
+            LuaInstance.Instance.Get().PushNumber((double)obj_ptr.ToInt64());
             return handle;
         }
 
@@ -961,26 +961,26 @@ namespace Game.Core.DotLua
         {
             GCHandle handle = GCHandle.Alloc(o, GCHandleType.Pinned);
             IntPtr obj_ptr = handle.AddrOfPinnedObject();
-            LuaAPI.lua_pushlightuserdata(m_lua, obj_ptr);
+            LuaAPI.lua_pushlightuserdata(luaPtr, obj_ptr);
             return handle;
         }
 
         [MonoPInvokeCallback(typeof(LuaAPI.lua_CFunction))]
         public static int GC(IntPtr l)
         {
-            GCHandle h = LuaInstance.instance.Get().ToUserDataHandler(-1);
+            GCHandle h = LuaInstance.Instance.Get().ToUserDataHandler(-1);
             h.Free();
             
             return 0;
         }
         public LuaType Type(int index)
         {
-            return (LuaType)LuaAPI.lua_type(this.m_lua, index);
+            return (LuaType)LuaAPI.lua_type(this.luaPtr, index);
         }
 
         public string TypeName(LuaType t)
         {
-            IntPtr ptr = LuaAPI.lua_typename(this.m_lua, (int)t);
+            IntPtr ptr = LuaAPI.lua_typename(this.luaPtr, (int)t);
             if (ptr == IntPtr.Zero)
             {
                 return null;
@@ -994,12 +994,12 @@ namespace Game.Core.DotLua
         }
 
         public string ErrorInfo() { 
-            LuaAPI.lua_geterror_info(this.m_lua);
+            LuaAPI.lua_geterror_info(this.luaPtr);
             if (this.IsNil(-1))
             {
                 return string.Empty;
             }
-            string errorInfo = LuaInstance.ConstructString(LuaInstance.instance.Get());
+            string errorInfo = LuaInstance.ConstructString(LuaInstance.Instance.Get());
             return errorInfo;
         
         }

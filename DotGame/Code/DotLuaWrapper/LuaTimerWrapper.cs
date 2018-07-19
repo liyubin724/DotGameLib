@@ -71,8 +71,15 @@ namespace Game.Core.DotLuaWrapper
             }
             float totalTime = lua.ToFloat(-5);
             float intervalTime = lua.ToFloat(-6);
+            LuaTable luaTimer = null;
+            if (lua.IsTable(-8))
+            {
+                lua.PushValue(-8);
+                int timerRef = lua.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
+                luaTimer = new LuaTable(lua, timerRef);
+            }
 
-            TimerTaskInfo taskInfo = LuaTimerManager.GetInstance().AddTimer(intervalTime, totalTime,
+            TimerTaskInfo taskInfo = LuaTimerManager.GetInstance().AddTimer(luaTimer, intervalTime, totalTime,
                                                                                 startFun, intervalFun, endFun, userData);
             lua.PushSystemObject(taskInfo, typeof(TimerTaskInfo));
             return 1;

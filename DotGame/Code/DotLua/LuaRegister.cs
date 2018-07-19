@@ -41,7 +41,7 @@ namespace Game.Core.DotLua
         }
         public static void RegisterType(Type type)
         {
-            LuaInstance.instance.RegisterData.RegisterToLua(type);
+            LuaInstance.Instance.RegisterData.RegisterToLua(type);
         }
 
         public static void RegisterIngoreStatic(string className)
@@ -49,7 +49,7 @@ namespace Game.Core.DotLua
             Type type = GetGameClassType(className);
             if (type != null)
             {
-                LuaInstance.instance.RegisterData.AddIngoreStaticRegister(type);
+                LuaInstance.Instance.RegisterData.AddIngoreStaticRegister(type);
             }
             else
             {

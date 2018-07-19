@@ -7,8 +7,8 @@
     <ProjectGuid>{4FB180D9-A94C-48FD-80C7-3A68B3BF25C9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Game.Core.DotLuaEditor</RootNamespace>
-    <AssemblyName>DotLuaEditor</AssemblyName>
+    <RootNamespace>GameEditor.Core</RootNamespace>
+    <AssemblyName>DotGameEditor</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
@@ -74,8 +74,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>if "$(ConfigurationName)"=="Debug" (
+    xcopy $(TargetDir)$(ProjectName).dll $(SolutionDir)..\UnityProj\Assets\Plugins\Editor\ /Y
+    xcopy $(TargetDir)$(ProjectName).pdb $(SolutionDir)..\UnityProj\Assets\Plugins\Editor\ /Y
+)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

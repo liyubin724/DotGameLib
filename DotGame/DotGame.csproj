@@ -124,6 +124,8 @@
     <Compile Include="Code\DotLua\LuaBehaviour_Timer.cs" />
     <Compile Include="Code\DotLua\LuaTable.cs" />
     <Compile Include="Code\DotLua\LuaFunction.cs" />
+    <Compile Include="Code\Event\GameEvent.cs" />
+    <Compile Include="Code\Event\GameEventManager.cs" />
     <Compile Include="Code\Timer\HierarchicalTimerWheel.cs" />
     <Compile Include="Code\Timer\LuaTimerManager.cs" />
     <Compile Include="Code\Timer\TimerManager.cs" />
@@ -145,14 +147,15 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Code\Event\" />
     <Folder Include="Code\Net\" />
     <Folder Include="Code\Pool\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>if "$(ConfigurationName)"=="Debug" (
+    xcopy $(TargetDir)$(ProjectName).dll $(SolutionDir)..\UnityProj\Assets\Plugins\ /Y
+    xcopy $(TargetDir)$(ProjectName).pdb $(SolutionDir)..\UnityProj\Assets\Plugins\ /Y
+)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

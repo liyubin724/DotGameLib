@@ -8,7 +8,7 @@ namespace Game.Core.DotLua
     {
         public void CallFunction(string funcName)
         {
-            LuaState lua_ = LuaInstance.instance.Get();
+            LuaState lua_ = LuaInstance.Instance.Get();
             lua_.RawGetI(LuaAPI.LUA_REGISTRYINDEX, classRef);
             lua_.GetField(-1, funcName);
             if (lua_.IsFunction(-1))
@@ -26,7 +26,7 @@ namespace Game.Core.DotLua
 
         public void CallFunction<T>(string funcName, T arg)
         {
-            LuaState lua_ = LuaInstance.instance.Get();
+            LuaState lua_ = LuaInstance.Instance.Get();
             lua_.RawGetI(LuaAPI.LUA_REGISTRYINDEX, classRef);
             lua_.GetField(-1, funcName);
             if (lua_.IsFunction(-1))
@@ -45,7 +45,7 @@ namespace Game.Core.DotLua
 
         private void CallFunction(int funcRef)
         {
-            LuaState lua_ = LuaInstance.instance.Get();
+            LuaState lua_ = LuaInstance.Instance.Get();
             lua_.RawGetI(LuaAPI.LUA_REGISTRYINDEX, funcRef);
             lua_.RawGetI(LuaAPI.LUA_REGISTRYINDEX, objRef);
             lua_.PCall(1, 0, 0);

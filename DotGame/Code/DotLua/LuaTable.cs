@@ -90,23 +90,28 @@ namespace Game.Core.DotLua
             if (isDisposed)
                 return;
 
-            if (objRef == LuaAPI.LUA_REFNIL)
-                lua.L_Unref(LuaAPI.LUA_REGISTRYINDEX, ref objRef);
+            if(lua!=null && lua.GetLuaPtr()!= IntPtr.Zero)
+            {
+                if (objRef == LuaAPI.LUA_REFNIL)
+                    lua.L_Unref(LuaAPI.LUA_REGISTRYINDEX, ref objRef);
 
-            if (childInfoIntDic != null && childInfoIntDic.Count>0)
-            {
-                foreach (KeyValuePair<int, LuaTable> kvp in childInfoIntDic)
+                if (childInfoIntDic != null && childInfoIntDic.Count > 0)
                 {
-                    kvp.Value.Dispose();
+                    foreach (KeyValuePair<int, LuaTable> kvp in childInfoIntDic)
+                    {
+                        kvp.Value.Dispose();
+                    }
+                }
+                if (childInfoStrDic != null && childInfoStrDic.Count > 0)
+                {
+                    foreach (KeyValuePair<string, LuaTable> kvp in childInfoStrDic)
+                    {
+                        kvp.Value.Dispose();
+                    }
                 }
             }
-            if (childInfoStrDic != null && childInfoStrDic.Count>0)
-            {
-                foreach (KeyValuePair<string, LuaTable> kvp in childInfoStrDic)
-                {
-                    kvp.Value.Dispose();
-                }
-            }
+
+            objRef = LuaAPI.LUA_REFNIL;
             childInfoIntDic = null;
             childInfoStrDic = null;
 

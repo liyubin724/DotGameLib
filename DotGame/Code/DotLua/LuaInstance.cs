@@ -9,14 +9,13 @@ namespace Game.Core.DotLua
 {
     public class LuaInstance
     {
-        private static LuaInstance instance_;
-        private LuaState lua_;
+        private static LuaInstance instance;
+        static object[][] methodParamCached = new object[10][];
 
-        static object[][] params_ = new object[10][];
+        private LuaState lua;
+        string luaPackagePath;
 
-        public int table_table_ref = LuaAPI.LUA_REFNIL;
-        HashSet<string> code_ = new HashSet<string>();
-        string luaRootPath_;
+        HashSet<string> doFileScripts = new HashSet<string>();
 
         private LuaRegisterData registerData = null;
         public LuaRegisterData RegisterData
@@ -27,47 +26,52 @@ namespace Game.Core.DotLua
             }
         }
 
-        public static LuaInstance instance 
+        public static LuaInstance Instance 
         {
             get
             {
-                if (instance_ == null)
+                if (instance == null)
                 {
-                    instance_ = new LuaInstance();
+                    instance = new LuaInstance();
                 }
-                return instance_;
+                return instance;
             }
         }
 
         LuaInstance()
         {
             for (int i = 0; i < 10; i++)
-                params_[i] = new object[i];
+                methodParamCached[i] = new object[i];
         }
 
         public void Init(LuaState luaState, string luaRootPath)
         {
-            lua_ = luaState;
-            registerData = new LuaRegisterData(lua_);
+            lua = luaState;
+            registerData = new LuaRegisterData(lua);
 
-            code_ = new HashSet<string>();
+            doFileScripts = new HashSet<string>();
+            luaPackagePath = luaRootPath.Replace("\\", "/");
 
-            luaRootPath_ = luaRootPath.Replace("\\", "/");
+            lua.GetGlobal("package");
+            lua.PushString(luaRootPath + "?.txt");
+            lua.SetField(-2, "path");
+            lua.Pop(1);
 
-            lua_.GetGlobal("package");
-            lua_.PushString(luaRootPath + "?.txt");
-            lua_.SetField(-2, "path");
-            lua_.Pop(1);
-
-            lua_.GetGlobal("table");
-            table_table_ref = lua_.L_Ref(LuaAPI.LUA_REGISTRYINDEX);
-
-            LuaWrapper.PreWrapper(lua_);
+            LuaWrapper.PreWrapper(lua);
         }
 
         public LuaState Get()
         {
-            return lua_;
+            return lua;
+        }
+
+        public bool IsValid()
+        {
+            if(lua == null || lua.GetLuaPtr() == IntPtr.Zero)
+            {
+                return false;
+            }
+            return true;
         }
 
         public static string ConstructString(LuaState lua)
@@ -122,37 +126,33 @@ namespace Game.Core.DotLua
         }
 
 
-        public void DoFile(string filename, bool checkContain = true)
+        public void DoFile(string filename)
         {
-            if (checkContain)
+            if (doFileScripts.Contains(filename))
             {
-                if (code_.Contains(filename))
-                {
-                    return;
-                }
-                code_.Add(filename);
+                return;
             }
+            doFileScripts.Add(filename);
 
 #if LUAPACK
             string path = filename;
 #else
-            string path = luaRootPath_ + filename;
+            string path = luaPackagePath + filename;
 #endif
-            lua_.L_DoFile(path);
+            lua.L_DoFile(path);
         }
 
-        //CallBacks for LuaClass
         [MonoPInvokeCallback(typeof(LuaAPI.lua_CFunction))]
         static public int SetField(IntPtr l)
         {
-            LuaState lua = LuaInstance.instance.lua_;
+            LuaState lua = LuaInstance.Instance.lua;
 
             int id = lua.ToInteger(lua.UpvalueIndex(1));
             int classIndex = 0;
             int fieldIndex = 0;
             SpritInt(id, ref fieldIndex, ref classIndex);
 
-            LuaClass luaClass = LuaInstance.instance.RegisterData.GetDynamicRegisterData(classIndex);
+            LuaClass luaClass = LuaInstance.Instance.RegisterData.GetDynamicRegisterData(classIndex);
             FieldInfo fieldInfo = luaClass.fields[fieldIndex];
 
             int top = lua.GetTop();
@@ -186,13 +186,12 @@ namespace Game.Core.DotLua
             }
         }
 
-          //New Instance
         [MonoPInvokeCallback(typeof(LuaAPI.lua_CFunction))]
         public static int DoCreate(IntPtr L)
         {
-            LuaState lua = LuaInstance.instance.lua_;
+            LuaState lua = LuaInstance.Instance.lua;
             int classIndex = lua.ToInteger(lua.UpvalueIndex(1));
-            LuaClass luaClass = LuaInstance.instance.RegisterData.GetDynamicRegisterData(classIndex);
+            LuaClass luaClass = LuaInstance.Instance.RegisterData.GetDynamicRegisterData(classIndex);
             Type classType = luaClass.registerType;
             object obj = classType.Assembly.CreateInstance(classType.FullName);
             lua.NewClassUserData(obj);
@@ -202,7 +201,7 @@ namespace Game.Core.DotLua
         [MonoPInvokeCallback(typeof(LuaAPI.lua_CFunction))]
         static public int Callback(IntPtr l)
         {
-            LuaState lua = LuaInstance.instance.lua_;
+            LuaState lua = LuaInstance.Instance.lua;
             object obj = lua.ToUserDataObject(1);
             return DoCallBack(lua, obj, 2);
         }
@@ -210,7 +209,7 @@ namespace Game.Core.DotLua
         [MonoPInvokeCallback(typeof(LuaAPI.lua_CFunction))]
         static public int CallbackStatic(IntPtr l)
         {
-            LuaState lua = LuaInstance.instance.lua_;
+            LuaState lua = LuaInstance.Instance.lua;
             return DoCallBack(lua, null, 1);
         }
 
@@ -222,11 +221,11 @@ namespace Game.Core.DotLua
             int methodIndex = 0;
             SpritInt(id, ref methodIndex, ref classIndex);
 
-            LuaClass luaClass = LuaInstance.instance.RegisterData.GetDynamicRegisterData(classIndex);
+            LuaClass luaClass = LuaInstance.Instance.RegisterData.GetDynamicRegisterData(classIndex);
             ParameterInfo[] ps = luaClass.paramters[methodIndex];
             MethodInfo methodInfo = luaClass.methods[methodIndex];
 
-            object[] p = LuaInstance.params_[luaClass.paramters[methodIndex].Length];
+            object[] p = LuaInstance.methodParamCached[luaClass.paramters[methodIndex].Length];
 
             if (ps.Length > 0)
             {
@@ -279,7 +278,7 @@ namespace Game.Core.DotLua
         {
             string luaError = "";
 
-            luaError = LuaInstance.instance.Get().ErrorInfo();
+            luaError = LuaInstance.Instance.Get().ErrorInfo();
 
             string errorString = "luaError: " + luaError + Environment.NewLine;
             if (ex.InnerException != null && ex.InnerException.Message != "")
@@ -305,12 +304,12 @@ namespace Game.Core.DotLua
 
         public void Dispose()
         {
-            if (lua_ != null)
+            if (lua != null)
             {
-                lua_.Close();
-                lua_ = null;
+                lua.Close();
             }
-            instance_ = null;
+            lua = null;
+            instance = null;
         }
     }
 }

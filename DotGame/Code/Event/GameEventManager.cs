@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Game.Core.Manager;
 using Game.Core.Timer;
 using Game.Core.Util;
 

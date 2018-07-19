@@ -51,8 +51,6 @@ namespace Game.Core.DotLua
         public RegisterToLuaBehaviour[] regLuaBehaviour;
         public RegisterToLuaBehaviourArr[] regLuaBehaviourArr;
 
-        public bool IsOnClickPassGameObject = false;
-
         private LuaState lua;
 
         protected int awakeFunRef = LuaAPI.LUA_REFNIL;
@@ -60,12 +58,13 @@ namespace Game.Core.DotLua
         protected int destoryFunRef = LuaAPI.LUA_REFNIL;
 
         private int objRef = LuaAPI.LUA_REFNIL;
+        private int classRef = LuaAPI.LUA_REFNIL;
+
         public int ObjectRef
         {
             get { return objRef; }
         }
 
-        private int classRef = LuaAPI.LUA_REFNIL;
         public int ClassRef
         {
             get { return classRef; }
@@ -77,7 +76,7 @@ namespace Game.Core.DotLua
             if (isInited)
                 return;
 
-            lua = LuaInstance.instance.Get();
+            lua = LuaInstance.Instance.Get();
             if (lua != null)
             {
                 lua.NewTable();
@@ -102,7 +101,7 @@ namespace Game.Core.DotLua
                 lua.Pop(1);
                 if (!string.IsNullOrEmpty(scriptShortPath))
                 {
-                    LuaInstance.instance.DoFile(scriptShortPath);
+                    LuaInstance.Instance.DoFile(scriptShortPath);
                     lua.GetGlobal(scriptName);
                     if(!lua.IsTable(-1))
                     {
@@ -287,13 +286,13 @@ namespace Game.Core.DotLua
 
         void OnDestroy()
         {
-            if (lua == null)
+            if (lua == null || lua.GetLuaPtr()==IntPtr.Zero)
                 return;
-
-            DisposeTimer();
 
             if (destoryFunRef != LuaAPI.LUA_REFNIL)
                 CallFunction(destoryFunRef);
+
+            DisposeTimer();
 
             lua.L_Unref(LuaAPI.LUA_REGISTRYINDEX, ref awakeFunRef);
             lua.L_Unref(LuaAPI.LUA_REGISTRYINDEX, ref startFunRef);

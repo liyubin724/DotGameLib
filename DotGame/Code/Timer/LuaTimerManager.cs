@@ -6,6 +6,7 @@ namespace Game.Core.Timer
 {
     internal class LuaTimerData
     {
+        public LuaTable luaTimer;
         public LuaFunction startFunc;
         public LuaFunction intervalFunc;
         public LuaFunction endFunc;
@@ -21,14 +22,15 @@ namespace Game.Core.Timer
 
         protected override void OnInit()
         {
-            lua = LuaInstance.instance.Get();
+            lua = LuaInstance.Instance.Get();
         }
 
-        public TimerTaskInfo AddTimer(float interval,float total,
+        public TimerTaskInfo AddTimer(LuaTable timer,float interval,float total,
                                         LuaFunction startFun,LuaFunction intervalFun,
                                         LuaFunction endFun,object userData)
         {
             LuaTimerData timerData = new LuaTimerData();
+            timerData.luaTimer = timer;
             timerData.startFunc = startFun;
             timerData.intervalFunc = intervalFun;
             timerData.endFunc = endFun;
@@ -85,19 +87,27 @@ namespace Game.Core.Timer
             {
                 timerData.endFunc.Invoke(timerData.userData);
             }
-            ClearTimer(index);
+            if(timerData.luaTimer!=null && timerData.luaTimer.IsValid())
+            {
+                lua.RawGetI(LuaAPI.LUA_REGISTRYINDEX, timerData.luaTimer.TableRef());
+                lua.GetField(-1, "RemoveTimer");
+                lua.PushValue(-2);
+                lua.PushSystemObject(timerTasks[index],typeof(TimerTaskInfo));
+                lua.PCall(2, 0, 0);
+                lua.Pop(1);
+            }
         }
 
         public void ClearTimer()
         {
             for (int i = 0; i < timerDatas.Count; i++)
             {
-                ClearTimer(i);
                 TimerTaskInfo taskInfo = timerTasks[i];
                 if (taskInfo != null)
                 {
                     TimerManager.GetInstance().RemoveTimerTask(taskInfo);
                 }
+                ClearTimer(i);
             }
             timerDatas.Clear();
             timerTasks.Clear();
@@ -110,6 +120,10 @@ namespace Game.Core.Timer
             timerTasks.RemoveAt(index);
             if (timerData != null)
             {
+                if(timerData.luaTimer!=null)
+                {
+                    timerData.luaTimer.Dispose();
+                }
                 if (timerData.startFunc != null)
                 {
                     timerData.startFunc.Dispose();
@@ -122,6 +136,7 @@ namespace Game.Core.Timer
                 {
                     timerData.endFunc.Dispose();
                 }
+                timerData.luaTimer = null;
                 timerData.startFunc = null;
                 timerData.intervalFunc = null;
                 timerData.endFunc = null;
