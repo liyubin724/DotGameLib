@@ -1,7 +1,8 @@
-﻿
+﻿using Game.Core.Pool;
+
 namespace Game.Core.Event
 {
-    public class GameEvent
+    public class GameEvent : ISimpleObjectReset
     {
         private int eventID = -1;
         public int EventID
@@ -31,13 +32,6 @@ namespace Game.Core.Event
             eventParams = objs;
         }
 
-        internal void OnReset()
-        {
-            eventID = -1;
-            eventDelayTime = 0.0f;
-            eventParams = null;
-        }
-
         public T GetEventParam<T>(int index = 0)
         {
             object result = GetEventParam(index);
@@ -61,6 +55,17 @@ namespace Game.Core.Event
             return eventParams[index];
         }
 
+        public void OnReset()
+        {
+            eventID = -1;
+            eventDelayTime = 0.0f;
+            eventParams = null;
+        }
+
+        public void OnDispose()
+        {
+            eventParams = null;
+        }
     }
 }
 

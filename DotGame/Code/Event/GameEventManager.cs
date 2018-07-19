@@ -1,15 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using Game.Core.Pool;
 using Game.Core.Timer;
 using Game.Core.Util;
+using System.Collections.Generic;
 
 namespace Game.Core.Event
 {
     public delegate void GameEventHandler(GameEvent e);
+
     public sealed class GameEventManager : Singleton<GameEventManager>
     {
-        private List<GameEvent> idleEventList = null;
         private Dictionary<GameEvent, TimerTaskInfo> delayEventTaskInfo = null;
         private Dictionary<int, List<GameEventHandler>> eventHandlerDic = null;
+
+        private SimpleObjectPool<GameEvent> eventPool = null;
 
         public GameEventManager()
         {
@@ -17,16 +20,23 @@ namespace Game.Core.Event
 
         protected override void OnInit()
         {
-            idleEventList = new List<GameEvent>();
+            eventPool = new SimpleObjectPool<GameEvent>(5);
+
             delayEventTaskInfo = new Dictionary<GameEvent, TimerTaskInfo>();
             eventHandlerDic = new Dictionary<int, List<GameEventHandler>>();
         }
 
         public void Dispose()
         {
-            idleEventList = null;
+            if(eventPool!=null)
+            {
+                eventPool.Dispose();
+            }
+            eventPool = null;
             delayEventTaskInfo = null;
             eventHandlerDic = null;
+
+            instance = null;
         }
 
         /// <summary>
@@ -87,7 +97,7 @@ namespace Game.Core.Event
         /// <param name="datas">事件携带参数</param>
         public void TriggerEvent(int eventID, float delayTime, params object[] datas)
         {
-            GameEvent e = GetIdleEvent();
+            GameEvent e = eventPool.GetItem();
             e.SetEvent(eventID, delayTime, datas);
 
             if (e.EventDelayTime <= 0)
@@ -97,7 +107,7 @@ namespace Game.Core.Event
             else
             {
                 //使用时间轮来管理事件触发 
-                TimerTaskInfo taskInfo = TimerManager.GetInstance().AddTimerTask(delayTime, delayTime, null, OnDelayEventTrigger, null, e);
+                TimerTaskInfo taskInfo = TimerManager.GetInstance().AddTimerTask(delayTime, delayTime, null, null, OnDelayEventTrigger, e);
                 delayEventTaskInfo.Add(e, taskInfo);
             }
         }
@@ -127,33 +137,11 @@ namespace Game.Core.Event
                         {
                             handlerList[i](e);
 
-                            RecyleEvent(e);
+                            eventPool.PutItem(e);
                         }
                     }
                 }
             }
-        }
-
-        private GameEvent GetIdleEvent()
-        {
-            GameEvent e = null;
-            if (idleEventList.Count == 0)
-            {
-                e = new GameEvent();
-            }
-            else
-            {
-                e = idleEventList[0];
-                idleEventList.RemoveAt(0);
-            }
-
-            return e;
-        }
-
-        private void RecyleEvent(GameEvent e)
-        {
-            e.OnReset();
-            idleEventList.Add(e);
         }
     }
 }

@@ -126,6 +126,7 @@
     <Compile Include="Code\DotLua\LuaFunction.cs" />
     <Compile Include="Code\Event\GameEvent.cs" />
     <Compile Include="Code\Event\GameEventManager.cs" />
+    <Compile Include="Code\Pool\SimpleObjectPool.cs" />
     <Compile Include="Code\Timer\HierarchicalTimerWheel.cs" />
     <Compile Include="Code\Timer\LuaTimerManager.cs" />
     <Compile Include="Code\Timer\TimerManager.cs" />
@@ -148,7 +149,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Code\Net\" />
-    <Folder Include="Code\Pool\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
