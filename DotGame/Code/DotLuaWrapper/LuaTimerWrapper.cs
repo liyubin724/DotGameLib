@@ -79,21 +79,18 @@ namespace Game.Core.DotLuaWrapper
                 luaTimer = new LuaTable(lua, timerRef);
             }
 
-            TimerTaskInfo taskInfo = LuaTimerManager.GetInstance().AddTimer(luaTimer, intervalTime, totalTime,
+            int timerIndex = LuaTimerManager.GetInstance().AddTimer(luaTimer, intervalTime, totalTime,
                                                                                 startFun, intervalFun, endFun, userData);
-            lua.PushSystemObject(taskInfo, typeof(TimerTaskInfo));
+            lua.PushInteger(timerIndex);
             return 1;
         }
 
         [MonoPInvokeCallback(typeof(LuaAPI.lua_CFunction))]
         private static int RemoveTimer(IntPtr l)
         {
-            TimerTaskInfo taskInfo = (TimerTaskInfo)lua.ToSystemObject(-1, typeof(TimerTaskInfo));
-            if(taskInfo!=null)
-            {
-                LuaTimerManager.GetInstance().RemoveTimer(taskInfo);
-            }
-
+            int timerIndex = lua.ToInteger(-1);
+            LuaTimerManager.GetInstance().RemoveTimer(timerIndex);
+            
             return 0;
         }
         

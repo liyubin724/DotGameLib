@@ -16,19 +16,23 @@ namespace Game.Core.Timer
 
     public class LuaTimerManager : Singleton<LuaTimerManager>
     {
-        private List<LuaTimerData> timerDatas = new List<LuaTimerData>();
-        private List<TimerTaskInfo> timerTasks = new List<TimerTaskInfo>();
         private LuaState lua;
 
+        private int timerIndex = 0;
+        private Dictionary<int, LuaTimerData> timerDatas = new Dictionary<int, LuaTimerData>();
+        private Dictionary<int, TimerTaskInfo> timerTasks = new Dictionary<int, TimerTaskInfo>();
         protected override void OnInit()
         {
             lua = LuaInstance.Instance.Get();
+            timerIndex = 0;
         }
 
-        public TimerTaskInfo AddTimer(LuaTable timer,float interval,float total,
+        public int AddTimer(LuaTable timer,float interval,float total,
                                         LuaFunction startFun,LuaFunction intervalFun,
                                         LuaFunction endFun,object userData)
         {
+            int infoIndex = timerIndex;
+
             LuaTimerData timerData = new LuaTimerData();
             timerData.luaTimer = timer;
             timerData.startFunc = startFun;
@@ -36,26 +40,22 @@ namespace Game.Core.Timer
             timerData.endFunc = endFun;
             timerData.userData = userData;
 
-            timerDatas.Add(timerData);
+            timerDatas.Add(infoIndex, timerData);
 
-            TimerTaskInfo taskInfo = TimerManager.GetInstance().AddTimerTask(interval, total, OnTimerStart, OnTimerInterval, OnTimerEnd, timerDatas.Count - 1);
-            timerTasks.Add(taskInfo);
-            return taskInfo;
+            TimerTaskInfo taskInfo = TimerManager.GetInstance().AddTimerTask(interval, total, OnTimerStart, OnTimerInterval, OnTimerEnd, infoIndex);
+            timerTasks.Add(infoIndex, taskInfo);
+            timerIndex++;
+
+            return infoIndex;
         }
 
-        public void RemoveTimer(TimerTaskInfo taskInfo)
+        public void RemoveTimer(int index)
         {
-            if (taskInfo != null)
+            if(timerTasks.ContainsKey(index))
             {
-                for (int i = 0; i < timerTasks.Count; i++)
-                {
-                    if (taskInfo == timerTasks[i])
-                    {
-                        TimerManager.GetInstance().RemoveTimerTask(taskInfo);
-                        ClearTimer(i);
-                        return;
-                    }
-                }
+                TimerTaskInfo taskInfo = timerTasks[index];
+                TimerManager.GetInstance().RemoveTimerTask(taskInfo);
+                ClearTimer(index);
             }
         }
 
@@ -90,24 +90,24 @@ namespace Game.Core.Timer
             if(timerData.luaTimer!=null && timerData.luaTimer.IsValid())
             {
                 lua.RawGetI(LuaAPI.LUA_REGISTRYINDEX, timerData.luaTimer.TableRef());
-                lua.GetField(-1, "RemoveTimer");
+                lua.GetField(-1, "OnTimerEnd");
                 lua.PushValue(-2);
-                lua.PushSystemObject(timerTasks[index],typeof(TimerTaskInfo));
+                lua.PushInteger(index);
                 lua.PCall(2, 0, 0);
                 lua.Pop(1);
             }
+            ClearTimer(index);
         }
 
         public void ClearTimer()
         {
-            for (int i = 0; i < timerDatas.Count; i++)
+            foreach(KeyValuePair<int,TimerTaskInfo> kvp in timerTasks)
             {
-                TimerTaskInfo taskInfo = timerTasks[i];
-                if (taskInfo != null)
+                if(kvp.Value!=null)
                 {
-                    TimerManager.GetInstance().RemoveTimerTask(taskInfo);
+                    TimerManager.GetInstance().RemoveTimerTask(kvp.Value);
                 }
-                ClearTimer(i);
+                ClearTimer(kvp.Key);
             }
             timerDatas.Clear();
             timerTasks.Clear();
@@ -116,8 +116,8 @@ namespace Game.Core.Timer
         private void ClearTimer(int index)
         {
             LuaTimerData timerData = timerDatas[index];
-            timerDatas.RemoveAt(index);
-            timerTasks.RemoveAt(index);
+            timerDatas.Remove(index);
+            timerTasks.Remove(index);
             if (timerData != null)
             {
                 if(timerData.luaTimer!=null)
