@@ -12,6 +12,7 @@ namespace GameEditor.Core.DotLua
     [CustomEditor(typeof(LuaBehaviour))]
     public class LuaBehaviourEditor : Editor
     {
+        private UnityEngine.Object monoScript = null;
         private List<RegisterToLuaObject> luaObjList = new List<RegisterToLuaObject>();
         private List<RegisterToLuaBehaviour> luaBehList = new List<RegisterToLuaBehaviour>();
 
@@ -24,6 +25,7 @@ namespace GameEditor.Core.DotLua
         public void Awake()
         {
             behaviour = target as LuaBehaviour;
+            monoScript = MonoScript.FromMonoBehaviour(behaviour);
             if(behaviour.regLuaObject!=null && behaviour.regLuaObject.Length>0)
             {
                 luaObjList.AddRange(behaviour.regLuaObject);
@@ -56,6 +58,12 @@ namespace GameEditor.Core.DotLua
         private bool isLuaBehArrFoldout = true;
         public override void OnInspectorGUI()
         {
+            EditorGUI.BeginDisabledGroup(true);
+            {
+                EditorGUILayout.ObjectField("Script:", monoScript, typeof(MonoScript), false);
+            }
+            EditorGUI.EndDisabledGroup();
+
             TextAsset luaScriptText = null;
             if(!string.IsNullOrEmpty(scriptAssetPath))
             {
